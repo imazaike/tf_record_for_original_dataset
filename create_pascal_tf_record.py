@@ -149,40 +149,30 @@ def main(_):
     raise ValueError('set must be in : {}'.format(SETS))
 
   data_dir = FLAGS.data_dir
-  print(data_dir)
   years = FLAGS.year
-
   writer = tf.python_io.TFRecordWriter(FLAGS.output_path)
 
   label_map_dict = label_map_util.get_label_map_dict(FLAGS.label_map_path)
   image_dir = os.path.join(data_dir, years)
-  print(image_dir)
 
   examples_path = os.path.join(data_dir, years, 'ImageSets', 'Main',
                                  'walking_' + FLAGS.set + '.txt')
   annotations_dir = os.path.join(data_dir, years, FLAGS.annotations_dir)
   examples_list_tmp = dataset_util.read_examples_list(examples_path)
 
-#  xml_list = os.listdir(annotations_dir)
-  print("1")
   examples_list = []
   for xml_name in examples_list_tmp:
     temp_splited_name = xml_name.split(".")
     examples_list.append(temp_splited_name[0])
   for idx, example in enumerate(examples_list):
-    print(example)
     if idx % 100 == 0:
       logging.info('On image %d of %d', idx, len(examples_list))
     path = os.path.join(annotations_dir, example + '.xml')
     with tf.gfile.GFile(path, 'r') as fid:
       xml_str = fid.read()
-    print("2")
     xml = etree.fromstring(xml_str)
-    print("3")
     data = dataset_util.recursive_parse_xml_to_dict(xml)['annotation']
-    print("4")
     tf_example = dict_to_tf_example(data, image_dir, label_map_dict)
-    print("5")
     writer.write(tf_example.SerializeToString())
 
   writer.close()
